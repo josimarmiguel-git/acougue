@@ -1,7 +1,10 @@
+# Stack do cliente (ex: "acougue-cliente1") — suba DEPOIS da stack "proxy".
+# Esta stack apenas USA a rede proxynet (não tenta criá-la).
+version: "3.8"
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: acougue-postgres
+    container_name: acougue-postgres-cliente1
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-acougue}
@@ -16,12 +19,13 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    # sem "networks:" aqui -> usa a rede "default" da stack, isolada, só com o app
 
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: acougue-pdv
+    container_name: acougue-pdv-cliente1
     restart: unless-stopped
     depends_on:
       postgres:
@@ -31,8 +35,14 @@ services:
       PORT: 3000
       DATABASE_URL: postgresql://${POSTGRES_USER:-acougue}:${POSTGRES_PASSWORD:-troque-esta-senha}@postgres:5432/${POSTGRES_DB:-acougue}
       TZ: America/Sao_Paulo
-    ports:
-      - "${APP_PORT:-3000}:3000"
+    networks:
+      - default    # fala com o postgres desta stack
+      - proxynet   # é alcançado pelo Caddy da stack "proxy"
+    # sem "ports:" -> não expõe direto ao host, só via proxy
 
 volumes:
   postgres_data:
+
+networks:
+  proxynet:
+    external: true
