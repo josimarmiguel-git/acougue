@@ -1,0 +1,25 @@
+# Stack "proxy" — suba esta PRIMEIRO. Ela cria e é dona da rede "proxynet".
+version: "3.8"
+services:
+  proxy:
+    image: caddy:2-alpine
+    container_name: saas-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxynet
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  proxynet:
+    name: proxynet
+    driver: bridge
